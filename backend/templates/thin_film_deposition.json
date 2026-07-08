@@ -1,0 +1,242 @@
+{
+  "name": "thin_film_deposition",
+  "display_name": "Thin-film deposition",
+  "description": "Literature-tracking table of WO3 (and related) thin-film RF-sputtering deposition parameters and H2-sensing results \u2014 one row per paper.",
+  "extraction_context": "You are a materials-science data extraction assistant building a literature-tracking table of thin-film (RF-sputtered metal-oxide) gas-sensor papers. You will be given the full text of one research paper. Produce EXACTLY ONE summary entry for the paper that captures its representative / primary deposition conditions and its headline hydrogen-sensing result. If the paper reports several films or conditions, summarize the main/optimal one and note key variations in Main Finding.",
+  "record_label": "entry",
+  "unreported_value": "NR",
+  "paper_fields": [
+    "title",
+    "authors",
+    "journal",
+    "year",
+    "doi"
+  ],
+  "include_other_properties": false,
+  "fields": [
+    {
+      "name": "ref_number",
+      "type": "string",
+      "nullable": false,
+      "description": "Sequential reference number in the literature table (assigned automatically by the reviewer; return NR).",
+      "label": "Ref#"
+    },
+    {
+      "name": "first_author",
+      "type": "string",
+      "nullable": false,
+      "description": "First author's surname followed by 'et al.'",
+      "label": "First Author et al."
+    },
+    {
+      "name": "year",
+      "type": "string",
+      "nullable": false,
+      "description": "Publication year.",
+      "label": "Year"
+    },
+    {
+      "name": "journal",
+      "type": "string",
+      "nullable": false,
+      "description": "Journal name or abbreviation.",
+      "label": "Journal"
+    },
+    {
+      "name": "paper_title",
+      "type": "string",
+      "nullable": false,
+      "description": "Full title of the paper.",
+      "label": "Paper Title"
+    },
+    {
+      "name": "sputtering_type",
+      "type": "string",
+      "nullable": false,
+      "description": "Sputtering technique, e.g. RF magnetron, DC, reactive RF.",
+      "label": "Sputtering Type"
+    },
+    {
+      "name": "power_w",
+      "type": "string",
+      "nullable": false,
+      "description": "Sputtering power in watts.",
+      "label": "Power (W)"
+    },
+    {
+      "name": "target_material",
+      "type": "string",
+      "nullable": false,
+      "description": "Sputter target material and composition.",
+      "label": "Target Material"
+    },
+    {
+      "name": "target_purity_percent",
+      "type": "string",
+      "nullable": false,
+      "description": "Target purity in percent.",
+      "label": "Target Purity (%)"
+    },
+    {
+      "name": "target_substrate_distance_cm",
+      "type": "string",
+      "nullable": false,
+      "description": "Target-to-substrate distance in cm.",
+      "label": "Target-Substrate Distance (cm)"
+    },
+    {
+      "name": "ar_flow_sccm",
+      "type": "string",
+      "nullable": false,
+      "description": "Argon flow rate in sccm.",
+      "label": "Ar Flow (sccm)"
+    },
+    {
+      "name": "o2_flow_sccm",
+      "type": "string",
+      "nullable": false,
+      "description": "Oxygen flow rate in sccm.",
+      "label": "O2 Flow (sccm)"
+    },
+    {
+      "name": "base_pressure",
+      "type": "string",
+      "nullable": false,
+      "description": "Base (background) chamber pressure with units.",
+      "label": "Base Pressure"
+    },
+    {
+      "name": "work_pressure",
+      "type": "string",
+      "nullable": false,
+      "description": "Working (deposition) pressure with units.",
+      "label": "Work Pressure"
+    },
+    {
+      "name": "rotation_speed_rpm",
+      "type": "string",
+      "nullable": false,
+      "description": "Substrate rotation speed in rpm.",
+      "label": "Rotation Speed (rpm)"
+    },
+    {
+      "name": "deposition_time_min",
+      "type": "string",
+      "nullable": false,
+      "description": "Deposition time in minutes.",
+      "label": "Deposition Time (min)"
+    },
+    {
+      "name": "deposition_rate_nm_min",
+      "type": "string",
+      "nullable": false,
+      "description": "Deposition rate in nm/min.",
+      "label": "Deposition Rate (nm/min)"
+    },
+    {
+      "name": "film_thickness_nm",
+      "type": "string",
+      "nullable": false,
+      "description": "Film thickness in nm.",
+      "label": "Film Thickness (nm)"
+    },
+    {
+      "name": "substrate_type",
+      "type": "string",
+      "nullable": false,
+      "description": "Substrate material / type.",
+      "label": "Substrate Type"
+    },
+    {
+      "name": "substrate_temp_c",
+      "type": "string",
+      "nullable": false,
+      "description": "Substrate temperature during deposition, in degrees C.",
+      "label": "Substrate Temp (C)"
+    },
+    {
+      "name": "annealing",
+      "type": "string",
+      "nullable": false,
+      "description": "Annealing temperature, time, and atmosphere.",
+      "label": "Annealing (T, t, Atmosphere)"
+    },
+    {
+      "name": "xrd_crystal_phase",
+      "type": "string",
+      "nullable": false,
+      "description": "Crystal phase identified by XRD.",
+      "label": "XRD Crystal Phase"
+    },
+    {
+      "name": "xrd_peak_2theta",
+      "type": "string",
+      "nullable": false,
+      "description": "Main XRD peak position(s) in degrees 2-theta.",
+      "label": "XRD Peak (2-theta)"
+    },
+    {
+      "name": "grain_size_nm",
+      "type": "string",
+      "nullable": false,
+      "description": "Crystallite / grain size in nm.",
+      "label": "Grain Size (nm)"
+    },
+    {
+      "name": "surface_roughness_nm",
+      "type": "string",
+      "nullable": false,
+      "description": "Surface roughness (e.g. RMS) in nm.",
+      "label": "Surface Roughness (nm)"
+    },
+    {
+      "name": "h2_concentration_tested",
+      "type": "string",
+      "nullable": false,
+      "description": "Hydrogen concentration(s) tested.",
+      "label": "H2 Concentration Tested"
+    },
+    {
+      "name": "optical_response_wl_shift",
+      "type": "string",
+      "nullable": false,
+      "description": "Optical response or wavelength shift on H2 exposure.",
+      "label": "Optical Response/WL Shift"
+    },
+    {
+      "name": "response_time_s",
+      "type": "string",
+      "nullable": false,
+      "description": "Response time in seconds.",
+      "label": "Response Time (s)"
+    },
+    {
+      "name": "recovery_time_s",
+      "type": "string",
+      "nullable": false,
+      "description": "Recovery time in seconds.",
+      "label": "Recovery Time (s)"
+    },
+    {
+      "name": "hysteresis",
+      "type": "string",
+      "nullable": false,
+      "description": "Whether hysteresis is reported: Y, N, or NR.",
+      "label": "Hysteresis (Y/N/NR)"
+    },
+    {
+      "name": "sensing_temp_c",
+      "type": "string",
+      "nullable": false,
+      "description": "Operating / sensing temperature in degrees C.",
+      "label": "Sensing Temp (C)"
+    },
+    {
+      "name": "main_finding",
+      "type": "string",
+      "nullable": false,
+      "description": "One-sentence summary of the paper's key result or contribution.",
+      "label": "Main Finding"
+    }
+  ]
+}

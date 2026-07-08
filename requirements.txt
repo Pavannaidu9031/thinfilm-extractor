@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+python-multipart
+pdfplumber
+google-genai
+jsonschema
+openpyxl
+python-docx
+reportlab
+pytest
+python-dotenv
+requests
+sqlalchemy>=2.0
+# Postgres driver (production). SQLite (local/dev) uses the stdlib sqlite3.
+psycopg[binary]>=3.1

@@ -1,0 +1,10 @@
+{
+  "name": "custom",
+  "display_name": "Custom (start from scratch)",
+  "description": "Minimal starting point: paper title, authors, and year only. Add your own fields for any quantitative, lab-based research area.",
+  "extraction_context": "You are a scientific data extraction assistant for quantitative, lab-based research papers. You will be given the full text of a research paper. Extract the paper metadata and every distinct experimental record described in the paper.",
+  "record_label": "record",
+  "paper_fields": ["title", "authors", "year"],
+  "include_other_properties": true,
+  "fields": []
+}

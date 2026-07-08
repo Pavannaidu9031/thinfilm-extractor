@@ -1,0 +1,170 @@
+/* Rock AI — "The Laboratory Record" design system
+   Palette: cyanotype & crucible. Type: STIX Two (papers) / Barlow (UI) /
+   IBM Plex Mono (all data values). */
+
+@import "@fontsource/stix-two-text/400.css";
+@import "@fontsource/stix-two-text/600.css";
+@import "@fontsource/barlow/400.css";
+@import "@fontsource/barlow/500.css";
+@import "@fontsource/barlow/600.css";
+@import "@fontsource/barlow/700.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+@import "@fontsource/ibm-plex-mono/600.css";
+@import "tailwindcss";
+
+@theme {
+  --font-display: "STIX Two Text", Georgia, "Times New Roman", serif;
+  --font-sans: "Barlow", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+
+  /* cyanotype & crucible */
+  --color-prussian: #12395b;      /* primary ink */
+  --color-prussian-deep: #0b2a45; /* hover ink */
+  --color-graphite: #2a2f35;      /* body text */
+  --color-notebook: #f7f5ef;      /* page */
+  --color-gridline: #d9e0e7;      /* rules, borders */
+  --color-wash: #eaf1f6;          /* blueprint wash fills */
+  --color-furnace: #b85c2b;       /* warm accent */
+  --color-furnace-ink: #9e4e24;   /* furnace, darkened for text on cream */
+  --color-furnace-wash: #f8ede4;  /* furnace fill */
+}
+
+body {
+  background-color: var(--color-notebook);
+  color: var(--color-graphite);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* faint millimeter grid — the substrate data gets recorded on */
+.mm-grid {
+  background-image:
+    linear-gradient(to right, rgb(18 57 91 / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(18 57 91 / 0.05) 1px, transparent 1px);
+  background-size: 8px 8px;
+}
+
+/* expandable card body */
+.expand-grid {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 320ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.expand-grid.open {
+  grid-template-rows: 1fr;
+}
+.expand-grid > div {
+  overflow: hidden;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.rise-in {
+  animation: rise-in 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* toast notifications */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.toast-in {
+  animation: toast-in 220ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* card leaving the list */
+@keyframes fade-out {
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+}
+.fade-out {
+  animation: fade-out 200ms ease-in both;
+}
+
+/* gentle lift on hover for cards and stat tiles */
+.lift {
+  transition:
+    transform 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.lift:hover {
+  transform: translateY(-1px);
+}
+
+/* ---- prose -> grid: the signature element ------------------------------ */
+/* During extraction, "text lines" drain while table cells fill in sequence. */
+
+@keyframes ptg-drain {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.18;
+  }
+}
+.ptg-line-active {
+  animation: ptg-drain 1.6s ease-in-out infinite;
+}
+
+@keyframes ptg-fill {
+  from {
+    opacity: 0.1;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.ptg-cell-filled {
+  animation: ptg-fill 420ms ease-out both;
+}
+
+.progress-rule {
+  transition: width 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* reduced motion: static states instead of the animated sequence */
+@media (prefers-reduced-motion: reduce) {
+  .ptg-line-active {
+    animation: none;
+    opacity: 0.35;
+  }
+  .ptg-cell-filled {
+    animation: none;
+    opacity: 1;
+  }
+  .progress-rule {
+    transition: none;
+  }
+  .rise-in,
+  .toast-in,
+  .fade-out {
+    animation-duration: 1ms;
+  }
+  .expand-grid {
+    transition: none;
+  }
+  .lift,
+  .lift:hover {
+    transition: none;
+    transform: none;
+  }
+}

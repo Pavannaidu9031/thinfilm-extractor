@@ -1,0 +1,59 @@
+{
+  "name": "chemical_reaction_screening",
+  "display_name": "Chemical reaction screening",
+  "description": "Reaction conditions and yields from synthesis / methodology papers (organic and inorganic chemistry).",
+  "record_label": "reaction",
+  "paper_fields": [
+    "title",
+    "authors",
+    "journal",
+    "year",
+    "doi"
+  ],
+  "include_other_properties": true,
+  "fields": [
+    {
+      "name": "product",
+      "type": "string",
+      "description": "Product formed (name or compound number as used in the paper)",
+      "label": "Product"
+    },
+    {
+      "name": "reagents",
+      "type": "string",
+      "description": "Starting materials and reagents with equivalents/amounts, comma-separated",
+      "label": "Reagents"
+    },
+    {
+      "name": "catalyst",
+      "type": "string",
+      "description": "Catalyst or promoter with loading, e.g. Pd(OAc)2 (5 mol%)",
+      "label": "Catalyst"
+    },
+    {
+      "name": "solvent",
+      "type": "string",
+      "description": "Reaction solvent",
+      "label": "Solvent"
+    },
+    {
+      "name": "temperature_c",
+      "type": "number",
+      "description": "Reaction temperature in degrees C (25 if the paper says room temperature)",
+      "label": "Temperature (C)"
+    },
+    {
+      "name": "reaction_time_h",
+      "type": "number",
+      "description": "Reaction time in hours",
+      "label": "Reaction time (h)"
+    },
+    {
+      "name": "yield_percent",
+      "type": "number",
+      "description": "Reported yield in percent (prefer isolated yield if both given)",
+      "label": "Yield (%)"
+    }
+  ],
+  "extraction_context": "You are a chemistry data extraction assistant specializing in synthetic methodology and reaction screening. You will be given the full text of a research paper. Extract the paper metadata and every distinct reaction entry described in the paper - including optimization-table entries and substrate-scope examples - with reagents, conditions, and yields."
+}
