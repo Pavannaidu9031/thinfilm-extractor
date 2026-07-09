@@ -16,15 +16,23 @@ import time
 
 import requests
 
-# Public Supabase project settings (the anon key is designed to be public).
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
-SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
-
 _CACHE_TTL_SECONDS = 60
 _HTTP_TIMEOUT_SECONDS = 8
 
 # token -> (user_id, expires_at_epoch)
 _token_cache: dict[str, tuple[str, float]] = {}
+
+
+def _config() -> tuple[str, str]:
+    """Read Supabase settings from the environment at call time.
+
+    Read lazily (not at import) because this module is imported before
+    load_dotenv() runs in main.py — reading at import would capture empty
+    values. The anon key is designed to be public.
+    """
+    url = os.environ.get("SUPABASE_URL", "").rstrip("/")
+    anon_key = os.environ.get("SUPABASE_ANON_KEY", "")
+    return url, anon_key
 
 
 def _cache_get(token: str) -> str | None:
@@ -46,7 +54,8 @@ def verify_token(token: str) -> str | None:
     """
     if not token:
         return None
-    if not SUPABASE_URL or not SUPABASE_ANON_KEY:
+    url, anon_key = _config()
+    if not url or not anon_key:
         # Misconfigured server: treat every request as unauthenticated rather
         # than silently trusting tokens.
         return None
@@ -57,9 +66,9 @@ def verify_token(token: str) -> str | None:
 
     try:
         resp = requests.get(
-            f"{SUPABASE_URL}/auth/v1/user",
+            f"{url}/auth/v1/user",
             headers={
-                "apikey": SUPABASE_ANON_KEY,
+                "apikey": anon_key,
                 "Authorization": f"Bearer {token}",
             },
             timeout=_HTTP_TIMEOUT_SECONDS,
