@@ -22,7 +22,7 @@ export default function Layout() {
             <span className="inline-flex items-center gap-2 rounded-[2px] border border-prussian/40 px-2.5 py-1 font-mono text-[13px] uppercase tracking-[0.18em] text-prussian">
               <span className="font-medium text-prussian/55">Built by</span>
               <span aria-hidden="true" className="h-3.5 w-px bg-prussian/25" />
-              <span className="font-semibold tracking-[0.22em]">Pavan Kalyan</span>
+              <span className="font-semibold tracking-[0.22em]">Pavan Kalyan and Lava Sai</span>
             </span>
           </div>
         </div>
