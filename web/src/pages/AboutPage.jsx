@@ -1,13 +1,18 @@
 import { useEffect, useState } from "react";
 import { getUsage } from "../api.js";
-import { getSessionId } from "../session.js";
+import { useAuth } from "../auth.jsx";
 
 export default function AboutPage() {
+  const { user, signInWithGoogle } = useAuth();
   const [usage, setUsage] = useState(null);
 
   useEffect(() => {
+    if (!user) {
+      setUsage(null);
+      return;
+    }
     getUsage().then(setUsage).catch(() => setUsage(null));
-  }, []);
+  }, [user]);
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -19,8 +24,9 @@ export default function AboutPage() {
           Rock AI
         </h1>
         <p className="mt-1.5 text-sm text-graphite/70">
-          Free structured-data extraction from lab-research PDFs. Extraction runs on a
-          shared server key — you don't need your own.
+          Free structured-data extraction from lab-research PDFs. Sign in with your
+          Google account to upload papers — extraction runs on a shared server key,
+          so you don't need your own.
         </p>
       </div>
 
@@ -29,20 +35,36 @@ export default function AboutPage() {
         <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-graphite/50">
           Your daily usage
         </p>
-        {usage ? (
-          <p className="mt-1 font-mono text-lg tabular-nums text-prussian">
-            {usage.used} / {usage.limit}{" "}
-            <span className="text-sm text-graphite/55">
-              extractions used today · resets at {usage.resets}
-            </span>
-          </p>
+        {user ? (
+          <>
+            {usage ? (
+              <p className="mt-1 font-mono text-lg tabular-nums text-prussian">
+                {usage.used} / {usage.limit}{" "}
+                <span className="text-sm text-graphite/55">
+                  extractions used today · resets at {usage.resets}
+                </span>
+              </p>
+            ) : (
+              <p className="mt-1 font-mono text-sm text-graphite/50">Loading…</p>
+            )}
+            <p className="mt-2 font-mono text-[10px] text-graphite/45">
+              Signed in as <span className="text-graphite/60">{user.email}</span>
+            </p>
+          </>
         ) : (
-          <p className="mt-1 font-mono text-sm text-graphite/50">Loading…</p>
+          <div className="mt-1.5">
+            <p className="text-sm text-graphite/65">
+              Your daily allowance is tied to your Google account.
+            </p>
+            <button
+              onClick={signInWithGoogle}
+              className="mt-2.5 rounded-[3px] border border-prussian/40 px-3 py-1.5 text-sm
+                font-medium text-prussian transition-colors duration-200 hover:bg-wash/50"
+            >
+              Sign in with Google
+            </button>
+          </div>
         )}
-        <p className="mt-2 font-mono text-[10px] text-graphite/45">
-          Session id (scopes your library on this browser):{" "}
-          <span className="text-graphite/60">{getSessionId().slice(0, 8)}…</span>
-        </p>
       </div>
 
       {/* Terms & Privacy */}
@@ -57,9 +79,10 @@ export default function AboutPage() {
             extraction — only the extracted fields are stored.
           </li>
           <li>
-            <span className="font-semibold text-graphite">Tied to your browser session.</span>{" "}
-            Your results are scoped to a random session id kept in this browser. Clearing your
-            browser storage, or opening a different browser, starts a fresh, separate library.
+            <span className="font-semibold text-graphite">Tied to your Google account.</span>{" "}
+            You sign in with Google, and your extracted results and daily extraction allowance
+            are scoped to that account. We use your Google identity only to identify you and
+            keep your library private.
           </li>
           <li>
             <span className="font-semibold text-graphite">Your responsibility.</span> Only upload

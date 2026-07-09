@@ -36,11 +36,20 @@ py -3.11 -m venv .venv
 pip install -r backend/requirements.txt
 ```
 
-Then put your Gemini API key (from Google AI Studio) in `.env`:
+Then create `.env` in the project root with your Gemini key and, for Google
+sign-in, your Supabase project's URL + anon (public) key:
 
 ```
 GEMINI_API_KEY=...
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_ANON_KEY=your-supabase-anon-public-key
 ```
+
+The backend verifies each user's Supabase access token and scopes their library
+and daily limit by Google account. The frontend needs the matching public
+values in `web/.env` (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and
+optionally `VITE_API_URL`). See [`DEPLOYMENT.md`](DEPLOYMENT.md) §1b for the
+one-time Google/Supabase provider setup.
 
 ## Run the backend
 
@@ -53,18 +62,20 @@ cd backend
 uvicorn main:app --reload
 ```
 
-API docs at http://localhost:8000/docs. Endpoints:
+API docs at http://localhost:8000/docs. Endpoints marked 🔒 require an
+`Authorization: Bearer <supabase-access-token>` header (the frontend attaches it
+automatically after Google sign-in); the `/templates` endpoints are public.
 
-- `POST /extract` — upload a PDF (multipart `file` field, optional `template`
+- 🔒 `POST /extract` — upload a PDF (multipart `file` field, optional `template`
   field defaulting to `thin_film_deposition`), returns extracted JSON and saves it
 - `GET /templates` — list extraction templates; `GET /templates/{name}` for one
 - `POST /templates` — create a template from a JSON spec (name + field list),
   no code changes needed; stored in `backend/templates/`
-- `GET /extractions` — list saved extractions
-- `GET /extractions/{id}` — full result for one extraction
-- `DELETE /extractions/{id}` — remove an extraction
-- `GET /extractions/{id}/export/{fmt}` — download as `xlsx`, `docx`, or `pdf`
-- `GET /extractions/export/all` — every paper in one Excel comparison workbook
+- 🔒 `GET /extractions` — list saved extractions
+- 🔒 `GET /extractions/{id}` — full result for one extraction
+- 🔒 `DELETE /extractions/{id}` — remove an extraction
+- 🔒 `GET /extractions/{id}/export/{fmt}` — download as `xlsx`, `docx`, or `pdf`
+- 🔒 `GET /extractions/export/all` — every paper in one Excel comparison workbook
 
 ## Run the frontend (React — primary)
 

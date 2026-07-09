@@ -1,8 +1,10 @@
 """FastAPI app: upload a research-paper PDF, get structured data back.
 
-Multi-user ready: each browser sends an X-Session-Id header that scopes all of
-its data, and its own Gemini API key as X-Gemini-Key (never stored). Uploads
-are rate-limited per client IP.
+Multi-user: users sign in with Google via Supabase Auth and send the resulting
+access token as an `Authorization: Bearer <token>` header. The backend verifies
+the token (see auth.py) and uses the Supabase user id to scope all of a user's
+data and to enforce a per-account daily extraction limit. Extraction itself runs
+on the server's own Gemini key for every user.
 """
 
 import os
@@ -12,10 +14,20 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import Body, FastAPI, File, Form, Header, HTTPException, UploadFile
+from fastapi import (
+    Body,
+    Depends,
+    FastAPI,
+    File,
+    Form,
+    Header,
+    HTTPException,
+    UploadFile,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
+import auth
 import database
 import exports
 import template_store
@@ -31,26 +43,38 @@ EXPORTERS = {
 
 load_dotenv()
 
-# Each browser session gets a fixed number of extractions per UTC calendar day,
+# Each account gets a fixed number of extractions per UTC calendar day,
 # protecting the shared server Gemini key from being drained by one user/bot.
-# In-memory + per-process: resets on restart, and keyed by the client-supplied
-# session id (bypassable by clearing browser storage) — fine for a small
-# soft-launch; move to a shared store / add an IP backstop to harden it.
+# In-memory + per-process: resets on restart, keyed by the authenticated
+# Supabase user id — fine for a small soft-launch; move to a shared/DB-backed
+# count to survive restarts and multiple backend instances.
 RATE_LIMIT_PER_DAY = int(os.environ.get("RATE_LIMIT_PER_DAY", "10"))
-_usage: dict[str, tuple[str, int]] = {}  # session_id -> (utc_date, count)
+_usage: dict[str, tuple[str, int]] = {}  # user_id -> (utc_date, count)
 
 
 def _utc_today() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
 
-def _usage_today(session_id: str) -> int:
-    day, count = _usage.get(session_id, (_utc_today(), 0))
+def _usage_today(user_id: str) -> int:
+    day, count = _usage.get(user_id, (_utc_today(), 0))
     return count if day == _utc_today() else 0
 
 
-def _bump_usage(session_id: str) -> None:
-    _usage[session_id] = (_utc_today(), _usage_today(session_id) + 1)
+def _bump_usage(user_id: str) -> None:
+    _usage[user_id] = (_utc_today(), _usage_today(user_id) + 1)
+
+
+def current_user_id(authorization: str = Header(default=None)) -> str:
+    """FastAPI dependency: verify the Supabase access token and return the
+    user id, or raise 401. Expects `Authorization: Bearer <token>`."""
+    token = ""
+    if authorization and authorization.lower().startswith("bearer "):
+        token = authorization[7:].strip()
+    user_id = auth.verify_token(token)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Sign in required.")
+    return user_id
 
 
 @asynccontextmanager
@@ -67,7 +91,7 @@ _origins = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_origins,
-    allow_credentials=False,  # no cookies; auth is via the X-Session-Id header
+    allow_credentials=False,  # no cookies; auth is via the Authorization header
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -79,8 +103,8 @@ def health():
 
 
 @app.get("/usage")
-def usage(session_id: str = Header(..., alias="X-Session-Id")):
-    used = _usage_today(session_id[:64])
+def usage(user_id: str = Depends(current_user_id)):
+    used = _usage_today(user_id)
     return {
         "used": used,
         "limit": RATE_LIMIT_PER_DAY,
@@ -93,16 +117,13 @@ def usage(session_id: str = Header(..., alias="X-Session-Id")):
 def extract(
     file: UploadFile = File(...),
     template: str = Form(template_store.DEFAULT_TEMPLATE),
-    session_id: str = Header(default=None, alias="X-Session-Id"),
+    user_id: str = Depends(current_user_id),
 ):
-    if not session_id:
-        raise HTTPException(status_code=400, detail="Missing X-Session-Id header.")
-    session_id = session_id[:64]
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Please upload a PDF file.")
 
-    # daily-limit gate (per session, UTC calendar day)
-    if _usage_today(session_id) >= RATE_LIMIT_PER_DAY:
+    # daily-limit gate (per account, UTC calendar day)
+    if _usage_today(user_id) >= RATE_LIMIT_PER_DAY:
         raise HTTPException(
             status_code=429,
             detail="Daily limit reached — resets at midnight UTC.",
@@ -125,8 +146,8 @@ def extract(
     finally:
         tmp_path.unlink(missing_ok=True)
 
-    extraction_id = database.save_extraction(session_id, file.filename, data, template=template)
-    _bump_usage(session_id)  # count only successful extractions
+    extraction_id = database.save_extraction(user_id, file.filename, data, template=template)
+    _bump_usage(user_id)  # count only successful extractions
     return {
         "id": extraction_id,
         "filename": file.filename,
@@ -161,17 +182,16 @@ def create_template(spec: dict = Body(...)):
 
 
 @app.get("/extractions")
-def extractions(session_id: str = Header(..., alias="X-Session-Id")):
-    return database.list_extractions(session_id[:64])
+def extractions(user_id: str = Depends(current_user_id)):
+    return database.list_extractions(user_id)
 
 
 @app.get("/extractions/export/all")
-def export_all_extractions(session_id: str = Header(..., alias="X-Session-Id")):
-    """This session's extractions in one Excel workbook for comparison."""
-    session_id = session_id[:64]
+def export_all_extractions(user_id: str = Depends(current_user_id)):
+    """This account's extractions in one Excel workbook for comparison."""
     records = [
-        database.get_extraction(session_id, item["id"])
-        for item in database.list_extractions(session_id)
+        database.get_extraction(user_id, item["id"])
+        for item in database.list_extractions(user_id)
     ]
     records = [r for r in records if r]
     if not records:
@@ -185,30 +205,30 @@ def export_all_extractions(session_id: str = Header(..., alias="X-Session-Id")):
 
 
 @app.get("/extractions/{extraction_id}")
-def extraction(extraction_id: int, session_id: str = Header(..., alias="X-Session-Id")):
-    record = database.get_extraction(session_id[:64], extraction_id)
+def extraction(extraction_id: int, user_id: str = Depends(current_user_id)):
+    record = database.get_extraction(user_id, extraction_id)
     if record is None:
         raise HTTPException(status_code=404, detail="Extraction not found.")
     return record
 
 
 @app.delete("/extractions/{extraction_id}")
-def delete_extraction(extraction_id: int, session_id: str = Header(..., alias="X-Session-Id")):
-    if not database.delete_extraction(session_id[:64], extraction_id):
+def delete_extraction(extraction_id: int, user_id: str = Depends(current_user_id)):
+    if not database.delete_extraction(user_id, extraction_id):
         raise HTTPException(status_code=404, detail="Extraction not found.")
     return {"deleted": extraction_id}
 
 
 @app.get("/extractions/{extraction_id}/export/{fmt}")
 def export_extraction(
-    extraction_id: int, fmt: str, session_id: str = Header(..., alias="X-Session-Id")
+    extraction_id: int, fmt: str, user_id: str = Depends(current_user_id)
 ):
     if fmt not in EXPORTERS:
         raise HTTPException(
             status_code=400,
             detail=f"Unknown format '{fmt}'. Use one of: {', '.join(EXPORTERS)}.",
         )
-    record = database.get_extraction(session_id[:64], extraction_id)
+    record = database.get_extraction(user_id, extraction_id)
     if record is None:
         raise HTTPException(status_code=404, detail="Extraction not found.")
 

@@ -1,11 +1,16 @@
 // In dev, requests go through the Vite proxy (/api -> http://localhost:8000).
 // In production, set VITE_API_URL to the deployed backend origin.
-import { getSessionId } from "./session.js";
+import { getAccessToken } from "./supabase.js";
 
 const API = import.meta.env.VITE_API_URL || "/api";
 
+function authHeader() {
+  const token = getAccessToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 function headers(extra = {}) {
-  return { "X-Session-Id": getSessionId(), ...extra };
+  return { ...authHeader(), ...extra };
 }
 
 export async function listExtractions() {
@@ -55,13 +60,14 @@ export async function deleteExtraction(id) {
 }
 
 /** Upload a PDF for a given template. onUploadProgress receives 0..1 for the
-    upload leg only. Scoped to this browser's session; extraction runs on the
+    upload leg only. Scoped to the signed-in account; extraction runs on the
     server's shared Gemini key. */
 export function uploadPdf(file, onUploadProgress, template) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", `${API}/extract`);
-    xhr.setRequestHeader("X-Session-Id", getSessionId());
+    const token = getAccessToken();
+    if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable) onUploadProgress(event.loaded / event.total);
     };

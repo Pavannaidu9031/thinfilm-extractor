@@ -2,8 +2,11 @@
 
 Uses SQLAlchemy Core so the same code runs on SQLite (local dev, default) and
 Postgres (production) — set DATABASE_URL to a Postgres connection string to
-switch. Every user-facing row is scoped by session_id so users deployed on the
-same instance never see each other's papers.
+switch. Every user-facing row is scoped by `session_id`, which now holds the
+authenticated Supabase user id (a UUID) so each account only sees its own
+papers. The column keeps its historical name; rows written before Google
+sign-in existed hold a random browser-session UUID instead and are simply never
+matched by a signed-in account (left in place, not migrated).
 """
 
 import json

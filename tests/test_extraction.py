@@ -644,10 +644,15 @@ def test_database_delete(tmp_path):
 # ------------------------------------------------------- /extract API (e2e)
 
 
-def test_extract_api_isolation_and_daily_limit(tmp_path, monkeypatch):
-    """End-to-end via the real FastAPI app (Gemini call mocked): two sessions
-    are isolated, and the per-session daily limit returns the right message
-    without affecting the other session."""
+def _auth(token):
+    return {"Authorization": f"Bearer {token}"}
+
+
+def test_extract_api_auth_isolation_and_daily_limit(tmp_path, monkeypatch):
+    """End-to-end via the real FastAPI app (Gemini call + Supabase token
+    verification mocked): unauthenticated calls are rejected, two accounts are
+    isolated, and the per-account daily limit returns the right message without
+    affecting the other account."""
     import importlib
 
     from fastapi.testclient import TestClient
@@ -661,23 +666,33 @@ def test_extract_api_isolation_and_daily_limit(tmp_path, monkeypatch):
     importlib.reload(main_mod)
     monkeypatch.setattr(main_mod, "extract_from_pdf", lambda *a, **k: SAMPLE_RESULT)
 
+    # Stand in for Supabase token introspection: two valid tokens -> two user
+    # ids; everything else is unauthenticated.
+    tokens = {"tok-A": "user-A", "tok-B": "user-B"}
+    monkeypatch.setattr(main_mod.auth, "verify_token", lambda token: tokens.get(token))
+
     files = {"file": ("p.pdf", b"%PDF-1.4 fake", "application/pdf")}
     with TestClient(main_mod.app) as client:
-        # session A: 2 succeed, 3rd hits the daily limit
+        # unauthenticated: no token and a bogus token are both rejected
+        assert client.post("/extract", files=files).status_code == 401
+        assert client.get("/extractions").status_code == 401
+        assert client.post("/extract", files=files, headers=_auth("nope")).status_code == 401
+
+        # account A: 2 succeed, 3rd hits the daily limit
         for _ in range(2):
-            assert client.post("/extract", files=files, headers={"X-Session-Id": "A"}).status_code == 200
-        blocked = client.post("/extract", files=files, headers={"X-Session-Id": "A"})
+            assert client.post("/extract", files=files, headers=_auth("tok-A")).status_code == 200
+        blocked = client.post("/extract", files=files, headers=_auth("tok-A"))
         assert blocked.status_code == 429
         assert blocked.json()["detail"] == "Daily limit reached — resets at midnight UTC."
 
-        # session B is unaffected — its own allowance is intact
-        assert client.post("/extract", files=files, headers={"X-Session-Id": "B"}).status_code == 200
-        assert client.get("/usage", headers={"X-Session-Id": "B"}).json()["remaining"] == 1
+        # account B is unaffected — its own allowance is intact
+        assert client.post("/extract", files=files, headers=_auth("tok-B")).status_code == 200
+        assert client.get("/usage", headers=_auth("tok-B")).json()["remaining"] == 1
 
-        # isolation: each session lists only its own; B can't fetch A's by id
-        a = client.get("/extractions", headers={"X-Session-Id": "A"}).json()
-        b = client.get("/extractions", headers={"X-Session-Id": "B"}).json()
+        # isolation: each account lists only its own; B can't fetch A's by id
+        a = client.get("/extractions", headers=_auth("tok-A")).json()
+        b = client.get("/extractions", headers=_auth("tok-B")).json()
         assert len(a) == 2 and len(b) == 1
-        assert client.get(f"/extractions/{a[0]['id']}", headers={"X-Session-Id": "B"}).status_code == 404
+        assert client.get(f"/extractions/{a[0]['id']}", headers=_auth("tok-B")).status_code == 404
 
     database._engines.clear()

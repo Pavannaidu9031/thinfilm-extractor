@@ -1,4 +1,5 @@
 import { NavLink, Link } from "react-router-dom";
+import { useAuth } from "../auth.jsx";
 
 const Logo = () => (
   <svg className="h-8 w-8 text-prussian" viewBox="0 0 32 32" fill="none">
@@ -24,6 +25,39 @@ const linkClass = ({ isActive }) =>
        ? "text-prussian after:absolute after:inset-x-2.5 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-prussian"
        : "text-graphite/60 hover:text-graphite"
    }`;
+
+function AccountArea() {
+  const { user, loading, signInWithGoogle, signOut } = useAuth();
+  if (loading) return null;
+  if (!user) {
+    return (
+      <button
+        onClick={signInWithGoogle}
+        className="ml-1 rounded-[3px] border border-prussian/40 px-2.5 py-1.5 text-sm
+          font-medium text-prussian transition-colors duration-200 hover:bg-wash/50"
+      >
+        Sign in
+      </button>
+    );
+  }
+  return (
+    <div className="ml-1.5 flex items-center gap-2 border-l border-gridline pl-1.5 sm:pl-2.5">
+      <span
+        className="hidden max-w-[13rem] truncate font-mono text-[11px] text-graphite/55 sm:inline"
+        title={user.email}
+      >
+        {user.email}
+      </span>
+      <button
+        onClick={signOut}
+        className="rounded-[3px] px-2.5 py-1.5 text-sm font-medium text-graphite/60
+          transition-colors duration-200 hover:text-prussian"
+      >
+        Sign out
+      </button>
+    </div>
+  );
+}
 
 export default function NavBar() {
   return (
@@ -55,6 +89,7 @@ export default function NavBar() {
           >
             API docs <span className="text-[11px]">↗</span>
           </a>
+          <AccountArea />
         </nav>
       </div>
     </header>

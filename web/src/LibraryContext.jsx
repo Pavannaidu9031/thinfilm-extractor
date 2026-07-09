@@ -6,6 +6,7 @@ import {
   listExtractions,
   listTemplates,
 } from "./api.js";
+import { useAuth } from "./auth.jsx";
 
 // Shared app state (records, templates, toasts) so every route reads the same
 // data without refetching on navigation.
@@ -18,6 +19,8 @@ export function useLibrary() {
 }
 
 export function LibraryProvider({ children }) {
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
   const [records, setRecords] = useState([]);
   const [templates, setTemplates] = useState([]); // summaries for the picker/list
   const [templateMap, setTemplateMap] = useState({}); // name -> full template
@@ -31,29 +34,8 @@ export function LibraryProvider({ children }) {
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3500);
   }, []);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setLoadError(null);
-    try {
-      const [items, templateList] = await Promise.all([listExtractions(), listTemplates()]);
-      const [full, fullTemplates] = await Promise.all([
-        Promise.all(items.map((item) => getExtraction(item.id))),
-        Promise.all(templateList.map((t) => getTemplate(t.name))),
-      ]);
-      setRecords(full); // backend returns newest first
-      setTemplates(templateList);
-      setTemplateMap(Object.fromEntries(fullTemplates.map((t) => [t.name, t])));
-    } catch (err) {
-      setLoadError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
+  // Templates are public (no sign-in needed) — load once on mount so the
+  // Templates page works for signed-out visitors too.
   const refreshTemplates = useCallback(async () => {
     const templateList = await listTemplates();
     const fullTemplates = await Promise.all(templateList.map((t) => getTemplate(t.name)));
@@ -61,6 +43,35 @@ export function LibraryProvider({ children }) {
     setTemplateMap(Object.fromEntries(fullTemplates.map((t) => [t.name, t])));
     return templateList;
   }, []);
+
+  // Extractions are per-account — (re)load when signed in, clear on sign-out.
+  const load = useCallback(async () => {
+    if (!userId) {
+      setRecords([]);
+      setLoadError(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const items = await listExtractions();
+      const full = await Promise.all(items.map((item) => getExtraction(item.id)));
+      setRecords(full); // backend returns newest first
+    } catch (err) {
+      setLoadError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    refreshTemplates().catch(() => {});
+  }, [refreshTemplates]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const onExtracted = useCallback(async (result) => {
     try {
