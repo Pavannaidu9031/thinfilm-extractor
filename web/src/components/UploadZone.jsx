@@ -7,7 +7,7 @@ import ProseToGrid from "./ProseToGrid.jsx";
 const STAGES = [
   { at: 0, until: 30, label: "Uploading PDF" },
   { at: 30, until: 55, label: "Extracting text from PDF" },
-  { at: 55, until: 85, label: "Gemini is reading the paper" },
+  { at: 55, until: 85, label: "Rock AI is analyzing the paper" },
   { at: 85, until: 94, label: "Validating against schema" },
 ];
 
