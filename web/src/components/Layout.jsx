@@ -18,6 +18,7 @@ export default function Layout() {
               Terms &amp; Privacy
             </Link>
           </p>
+          <p className="mt-2 text-xs text-graphite/50">Built by Pavan Kalyan</p>
         </div>
       </footer>
       <Toaster />
