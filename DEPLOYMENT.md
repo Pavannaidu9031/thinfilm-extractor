@@ -27,11 +27,18 @@ and [`web/.env.production.example`](web/.env.production.example) (frontend).
 
 ## 2. Backend → Render (or Railway)
 
-**Render** — New → Web Service → connect this repo:
+**Render (Blueprint — easiest):** the repo ships a [`render.yaml`](render.yaml)
+at its root. New → **Blueprint** → connect this repo and Render reads the
+service config below automatically. It will prompt for the `sync: false`
+secrets (`GEMINI_API_KEY`, `DATABASE_URL`, `ALLOWED_ORIGINS`).
 
-- **Root directory:** the project root (where `requirements.txt` is).
+**Render (manual)** — New → Web Service → connect this repo, then set:
+
+- **Root directory:** `backend` (this is the app root; `requirements.txt`
+  lives here and the code imports its modules top-level).
 - **Build command:** `pip install -r requirements.txt`
-- **Start command:** `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
+- **Start command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
+- **Health check path:** `/health`
 - **Environment variables** (Dashboard → Environment):
   | Key | Value |
   |---|---|
@@ -40,8 +47,10 @@ and [`web/.env.production.example`](web/.env.production.example) (frontend).
   | `ALLOWED_ORIGINS` | your frontend URL, e.g. `https://rock-ai.vercel.app` |
   | `RATE_LIMIT_PER_DAY` | `10` (optional; defaults to 10) |
 
-**Railway** — New Project → Deploy from repo. Same Start command; set the same
-variables under Variables. Railway provides `$PORT` automatically.
+**Railway** — New Project → Deploy from repo. Set the **root directory** to
+`backend`, use the same start command (`uvicorn main:app --host 0.0.0.0 --port
+$PORT`), and set the same variables under Variables. Railway provides `$PORT`
+automatically.
 
 After deploy, confirm `https://your-backend.onrender.com/health` returns
 `{"status":"ok"}`.

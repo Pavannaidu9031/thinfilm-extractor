@@ -18,7 +18,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
-from backend.template_store import DEFAULT_TEMPLATE, field_labels, load_template
+from template_store import DEFAULT_TEMPLATE, field_labels, load_template
 
 # Paper-identity columns shared by every template (left side of flat sheets)
 PAPER_COLUMNS = ["Extraction #", "Source file", "Title", "Journal", "Year", "DOI", "Record #"]

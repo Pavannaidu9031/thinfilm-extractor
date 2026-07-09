@@ -5,9 +5,11 @@ from types import SimpleNamespace
 
 import pytest
 
-from backend import database, exports, template_store
-from backend.extractor import extract_data, extract_pdf_text
-from backend.schema import THINFILM_SCHEMA
+import database
+import exports
+import template_store
+from extractor import extract_data, extract_pdf_text
+from schema import THINFILM_SCHEMA
 
 SAMPLE_RESULT = {
     "paper": {
@@ -654,7 +656,7 @@ def test_extract_api_isolation_and_daily_limit(tmp_path, monkeypatch):
     monkeypatch.setenv("RATE_LIMIT_PER_DAY", "2")
     database._engines.clear()  # force the app to build the temp-DB engine
 
-    import backend.main as main_mod
+    import main as main_mod
 
     importlib.reload(main_mod)
     monkeypatch.setattr(main_mod, "extract_from_pdf", lambda *a, **k: SAMPLE_RESULT)

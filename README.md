@@ -16,11 +16,12 @@ thinfilm-extractor/
     exports.py       Excel / Word / PDF report generation
     schema.py        JSON schema the extraction must conform to
     database.py      SQLite storage (backend/extractions.db)
+    requirements.txt Python dependencies (backend is the deploy root dir)
     test_papers/     drop sample PDFs here
   web/               React + Vite + Tailwind UI (the frontend)
   tests/
     test_extraction.py
-  requirements.txt
+  render.yaml        Render Blueprint for the backend service
   .env               your GEMINI_API_KEY (gitignored)
 ```
 
@@ -32,7 +33,7 @@ Requires Python 3.11+.
 cd thinfilm-extractor
 py -3.11 -m venv .venv
 .venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+pip install -r backend/requirements.txt
 ```
 
 Then put your Gemini API key (from Google AI Studio) in `.env`:
@@ -43,10 +44,13 @@ GEMINI_API_KEY=...
 
 ## Run the backend
 
-From the project root (with the venv activated):
+The backend is self-contained in `backend/` — that directory is the app root
+(the same as `rootDir: backend` on Render). With the venv activated, run it
+from inside `backend/`:
 
 ```powershell
-uvicorn backend.main:app --reload
+cd backend
+uvicorn main:app --reload
 ```
 
 API docs at http://localhost:8000/docs. Endpoints:

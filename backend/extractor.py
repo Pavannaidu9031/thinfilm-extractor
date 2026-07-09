@@ -13,7 +13,7 @@ from google import genai
 from google.genai import errors as genai_errors
 from google.genai import types
 
-from backend.template_store import (
+from template_store import (
     DEFAULT_TEMPLATE,
     build_schema,
     build_system_prompt,

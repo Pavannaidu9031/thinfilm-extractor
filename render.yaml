@@ -1,0 +1,26 @@
+# Render Blueprint for the Rock AI backend (FastAPI).
+# In the Render dashboard: New → Blueprint, point it at this repo, and Render
+# reads this file. The frontend (web/) deploys separately on Vercel/Netlify —
+# see DEPLOYMENT.md.
+#
+# Secrets are marked `sync: false` so Render prompts for them at deploy time and
+# never stores them in the repo. Set GEMINI_API_KEY and DATABASE_URL in the
+# dashboard; they are backend-only and never sent to the browser.
+services:
+  - type: web
+    name: rock-ai-backend
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: RATE_LIMIT_PER_DAY
+        value: "10"

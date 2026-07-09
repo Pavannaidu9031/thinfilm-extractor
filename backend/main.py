@@ -16,8 +16,10 @@ from fastapi import Body, FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
-from backend import database, exports, template_store
-from backend.extractor import extract_from_pdf
+import database
+import exports
+import template_store
+from extractor import extract_from_pdf
 
 EXPORTERS = {
     "xlsx": (exports.to_excel_bytes,

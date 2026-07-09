@@ -28,7 +28,7 @@ from sqlalchemy import (
     update as sa_update,
 )
 
-from backend.template_store import DEFAULT_TEMPLATE
+from template_store import DEFAULT_TEMPLATE
 
 DEFAULT_SQLITE_PATH = Path(__file__).parent / "extractions.db"
 
